@@ -1,3 +1,4 @@
+import math
 import pygame
 
 
@@ -8,7 +9,9 @@ class Ship:
         self.type = ship_type
         self.turn_angle = 0
         self.turn_rate_angle = 10
-        self.speed = 0
+        self.move_speed = 10
+        self.current_speed = 0
+        self.move_target = None
 
         # img parameters
         self.ship_img = ship_img
@@ -27,8 +30,35 @@ class Ship:
         self.display_rect.center = (x, y)
         self.turn_angle = angle
 
-    def move_ship(ship, rect, target):
-        pass
+    def set_move_target(self, target):
+        self.move_target = target
+
+    def set_new_position(self, dx, dy):
+        self.position = (self.position[0] + dx, self.position[1] + dy)
+        self.display_rect.center = self.position
+
+    def move_ship(self):
+        if self.move_target and self.position != self.move_target:
+            # TODO: turn ship in target direction
+            angle = math.atan2(self.move_target[1] - self.position[1], self.move_target[0] - self.position[0])
+            turn_angle = -angle * 180 / math.pi
+            self.turn_ship(turn_angle-90)
+            # TODO: calculate correct velocity for x and y
+            vel_x = 0
+            vel_y = 0
+            vel_y = int(round(self.move_speed * math.sin(angle)))
+            vel_x = int(round(self.move_speed * math.cos(angle)))
+            distance_x = self.move_target[0] - self.position[0]
+            distance_y = self.move_target[0] - self.position[0]
+            if abs(distance_x) < abs(vel_x):
+                vel_x = distance_x
+            if abs(distance_y) < abs(vel_y):
+                vel_y = distance_y
+            self.set_new_position(vel_x, vel_y)
+            # stop near the target
+            if abs(vel_x) <= 3 and abs(vel_y) <= 3:
+                self.move_target = None
+
 
 def main():
     pygame.init()
@@ -53,9 +83,11 @@ def main():
             if event.type == pygame.QUIT:
                 crashed = True
 
-            print(event)
             if event.type == pygame.MOUSEBUTTONDOWN:
-                player_ship.turn_ship(player_ship.turn_angle + player_ship.turn_rate_angle)
+                # player_ship.turn_ship(player_ship.turn_angle + player_ship.turn_rate_angle)
+                player_ship.set_move_target(event.pos)
+
+        player_ship.move_ship()
 
         gameDisplay.blit(space, (0, 0))
         gameDisplay.blit(player_ship.ship_img, player_ship.get_display_rect())
